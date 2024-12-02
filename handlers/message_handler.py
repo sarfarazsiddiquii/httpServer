@@ -1,11 +1,22 @@
-from data.messages import get_all_messages, add_message, update_message, delete_message
+from database.messages import get_all_messages, add_message, update_message, delete_message
 
+def filter_messages_by_query(query_params):
+    all_messages = get_all_messages()
+    if query_params:
+        return [
+            message for message in all_messages
+            if all(
+                str(message.get(key)) in values
+                for key, values in query_params.items()
+            )
+        ]
+    return all_messages
 
-def handle_get_messages():
-    return {
-        "status": "success",
-        "messages": get_all_messages()
-    }
+def handle_get_messages(query_params=None):
+    all_messages = get_all_messages()
+    filtered_messages = filter_messages_by_query(query_params)
+    return {"status": "success", "messages": filtered_messages}
+
 
 
 def handle_post_message(data):
@@ -17,23 +28,34 @@ def handle_post_message(data):
     }
 
 
-def handle_put_message(message_id, data):
-    updated_message = update_message(message_id, data)
-    if updated_message:
-        return {
-            "status": "success",
-            "message": "Message updated successfully",
-            "data": updated_message
-        }
-    return {
-        "status": "error",
-        "message": "Message not found"
-    }
+def handle_put_message(query_params, data):
+    messages_to_update = filter_messages_by_query(query_params)
+    if not messages_to_update:
+        return {"status": "error", "message": "No matching messages found"}
 
+    updated_messages = []
+    for message in messages_to_update:
+        updated_message = update_message(message["id"], data)
+        updated_messages.append(updated_message)
 
-def handle_delete_message(message_id):
-    delete_message(message_id)
     return {
         "status": "success",
-        "message": f"Message with ID {message_id} deleted successfully"
+        "message": f"{len(updated_messages)} message(s) updated successfully",
+        "data": updated_messages
     }
+
+
+def handle_delete_message(query_params):
+
+    messages_to_delete = filter_messages_by_query(query_params)
+    if not messages_to_delete:
+        return {"status": "error", "message": "No matching messages found"}
+
+    for message in messages_to_delete:
+        delete_message(message["id"])
+
+    return {
+        "status": "success",
+        "message": f"{len(messages_to_delete)} message(s) deleted successfully"
+    }
+

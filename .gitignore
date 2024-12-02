@@ -1,1 +1,4 @@
 __pycache__/
+
+# Ignore server.log file
+server.log
