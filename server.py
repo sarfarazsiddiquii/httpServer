@@ -9,11 +9,11 @@ import json
 class CustomHTTPRequestHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         process_headers(self.headers)
-        log_request("GET", path, query_params)
         
         parsed_url = urlparse(self.path)
         path = parsed_url.path
         query_params = parse_qs(parsed_url.query)
+        log_request("GET", path, query_params)
         validation_error = validation(self.headers, path, query_params, 'GET')
         if validation_error:
             self._send_response(validation_error)
@@ -64,7 +64,6 @@ class CustomHTTPRequestHandler(BaseHTTPRequestHandler):
         if validation_error:
             self._send_response(validation_error)
             return
-        
         response = handle_delete_message(query_params)
         self._send_response(response)
 
